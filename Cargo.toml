@@ -1,8 +1,13 @@
 [package]
 name = "quadb"
-version = "0.1.0"
+authors = ["Glenn Wallace glennw-coding@proton.me"]
+version = "0.0.1"
 edition = "2024"
 license = "MIT"
+repository = "https://github.com/glennw-mt/quadb"
+readme = "README.md"
+keywords = ["database", "key-value", "octree", "async", "data-structure"]
+categories = ["data-structures", "database-implementations", "game-development", "simulation"]
 
 [dependencies]
 bincode = { version = "2.0.1", features = ["derive", "serde"] }
