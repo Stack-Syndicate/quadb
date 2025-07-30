@@ -8,6 +8,7 @@ repository = "https://github.com/glennw-mt/quadb"
 readme = "README.md"
 keywords = ["database", "key-value", "octree", "async", "data-structure"]
 categories = ["data-structures", "database-implementations", "game-development", "simulation"]
+description = "Quadb is an asynchronous octree manager implemented over redb, designed for efficient storage and retrieval of spatial data from disk."
 
 [dependencies]
 bincode = { version = "2.0.1", features = ["derive", "serde"] }
