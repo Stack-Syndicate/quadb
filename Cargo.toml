@@ -1,0 +1,12 @@
+[package]
+name = "quadb"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+
+[dependencies]
+bincode = { version = "2.0.1", features = ["derive", "serde"] }
+dashmap = "6.1.0"
+redb = "2.6.1"
+tempfile = "3.20.0"
+tokio = { version = "1.47.0", features = ["full"] }
