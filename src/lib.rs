@@ -1,10 +1,11 @@
-use std::error::Error;
-use bincode::{Encode, Decode, encode_to_vec, decode_from_slice, config};
+mod spacetree;
+mod utils;
+
+use bincode::{Decode, Encode, config, decode_from_slice, encode_to_vec};
 use redb::{Database, TableDefinition};
+use utils::BoxedError;
 
 const TABLE_DEFINITION: TableDefinition<&[u8], &[u8]> = TableDefinition::new("kv");
-
-type BoxedError = Box<dyn Error + Send + Sync>;
 
 struct QuadDB {
     db: Database,
@@ -48,12 +49,10 @@ impl QuadDB {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::tempdir;
-    use std::sync::Arc;
-    use std::thread;
     use bincode::{Decode, Encode};
+    use tempfile::tempdir;
 
-    #[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
+    #[derive(Encode, Decode, Debug, PartialEq, Eq, Clone, Copy)]
     struct TestKey {
         id: u32,
     }
@@ -70,7 +69,10 @@ mod tests {
         let db = QuadDB::new(dir.path().join("db.redb").to_str().unwrap()).unwrap();
 
         let key = TestKey { id: 1 };
-        let value = TestValue { name: "alpha".into(), data: vec![1, 2, 3] };
+        let value = TestValue {
+            name: "alpha".into(),
+            data: vec![1, 2, 3],
+        };
 
         // Create
         db.insert(&key, &value).unwrap();
@@ -80,7 +82,10 @@ mod tests {
         assert_eq!(fetched, value);
 
         // Update
-        let new_value = TestValue { name: "beta".into(), data: vec![4, 5, 6] };
+        let new_value = TestValue {
+            name: "beta".into(),
+            data: vec![4, 5, 6],
+        };
         db.insert(&key, &new_value).unwrap();
         let updated = db.get::<_, TestValue>(&key).unwrap().unwrap();
         assert_eq!(updated, new_value);
@@ -97,33 +102,78 @@ mod tests {
     }
 
     #[test]
-    fn concurrent_reads_and_writes() {
+    fn concurrent_reads_and_writes_with_contention() {
+        use rand::{Rng, thread_rng};
+        use std::{sync::Arc, thread, time::Duration};
+        use tempfile::tempdir;
+
         let dir = tempdir().unwrap();
         let db = Arc::new(QuadDB::new(dir.path().join("db.redb").to_str().unwrap()).unwrap());
 
-        let num_threads = 10;
-        let ops_per_thread = 20;
+        let num_threads = 20;
+        let ops_per_thread = 50;
+        let shared_key = TestKey { id: 9999 };
         let mut handles = vec![];
 
         for thread_id in 0..num_threads {
             let db = Arc::clone(&db);
             handles.push(thread::spawn(move || {
+                let mut rng = thread_rng();
                 for i in 0..ops_per_thread {
-                    let key = TestKey { id: thread_id * ops_per_thread + i };
+                    // Thread-unique key
+                    let key = TestKey {
+                        id: thread_id * ops_per_thread + i,
+                    };
                     let val = TestValue {
                         name: format!("worker-{thread_id}"),
                         data: vec![i as u8, thread_id as u8],
                     };
 
-                    db.insert(&key, &val).unwrap();
-                    let fetched = db.get::<_, TestValue>(&key).unwrap().unwrap();
-                    assert_eq!(fetched, val);
+                    db.insert(&key, &val).expect("insert failed (unique key)");
+                    let fetched = db
+                        .get::<_, TestValue>(&key)
+                        .expect("get failed (unique key)")
+                        .expect("missing value");
+                    assert_eq!(fetched, val, "unique key mismatch");
+
+                    // Shared key (last write wins)
+                    let shared_val = TestValue {
+                        name: format!("shared-{thread_id}-{i}"),
+                        data: vec![i as u8],
+                    };
+
+                    db.insert(&shared_key, &shared_val)
+                        .expect("insert failed (shared key)");
+                    let fetched_shared = db
+                        .get::<_, TestValue>(&shared_key)
+                        .expect("get failed (shared key)")
+                        .expect("shared key missing");
+
+                    assert!(
+                        fetched_shared.name.starts_with("shared-"),
+                        "shared key corrupt: {:?}",
+                        fetched_shared
+                    );
+
+                    thread::sleep(Duration::from_millis(rng.gen_range(0..5)));
                 }
+
+                Ok::<(), String>(())
             }));
         }
 
-        for h in handles {
-            h.join().unwrap();
+        for handle in handles {
+            handle
+                .join()
+                .expect("thread panicked")
+                .expect("thread error");
         }
+
+        // Final check: shared key should still be valid
+        let final_val = db.get::<_, TestValue>(&shared_key.clone()).unwrap().unwrap();
+        assert!(
+            final_val.name.starts_with("shared-"),
+            "final shared value corrupt"
+        );
     }
 }
