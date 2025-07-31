@@ -1,5 +1,7 @@
 # QuadDB
 
+This crate is in the earliest stages. Use with caution.
+
 QuadDB is a minimal typed key-value octree store built on top of [`redb`](https://docs.rs/redb), using efficient binary encoding via [`bincode`](https://docs.rs/bincode).
 
 ## Project Vision
