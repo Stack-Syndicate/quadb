@@ -1,16 +1,29 @@
-# QuadDB
+# QuaDB
+[![Crates.io](https://img.shields.io/crates/v/quadb.svg)](https://crates.io/crates/quadb)
+[![Docs.rs](https://docs.rs/quadb/badge.svg)](https://docs.rs/quadb)
+[![Rust](https://img.shields.io/badge/Rust-%23000000.svg?e&logo=rust&logoColor=red)](https://www.rust-lang.org/)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/license/mit/)
 
-QuadDB is a minimal typed key-value octree store built on top of [`redb`](https://docs.rs/redb), using efficient binary encoding via [`bincode`](https://docs.rs/bincode).
+This project is in the very early stages of development and is nowhere near ready for use.
+
+## Description
+
+QuadDB is an asynchronous octree manager implemented over [`redb`](https://docs.rs/redb), designed for efficient storage and retrieval of spatial data from disk. Binary encoding is handled using [`bincode`](https://docs.rs/bincode) for compactness and speed.
 
 ## Project Vision
 
-QuadDB is the foundation for a generalised octree-based simulation engine. The long-term goal is to support **arbitrary-dimensional spatial indexing**, enabling **real-time simulations** that **stream data to and from disk** efficiently—without requiring everything to fit in memory.
+The goal of QuadDB is to provide a robust and efficient solution for managing and updating large spatial datasets, particularly in simulations. The use-case envisioned is for graduate students working on simulations that need to manipulate huge datasets involving particle systems or fluid dynamics where memory size is a constraint and access to a supercomputer is not feasible.
 
-## Features & Tradeoffs
+| Feature                       | Status         |
+|-------------------------------|----------------|
+| $2^n$-Tree Backend            | :construction: In progress |
+| Basic CRUD Operations         | :construction: In progress |
+| Leaf Streaming                | :turtle: Planned     |
+| Documentation                 | :turtle: Planned     |
+| $kd$-Tree Backend             | :turtle: Planned     |
 
-- Typed keys and values implementing `bincode::Encode` / `Decode`
-- Simple insert/get interface
-- Concurrent read/write safe
-- Built on the high-performance `redb` embedded database
-- Uses `dashmap` for in-memory caching
-- Trades in-memory performance for scalability
+**$2^n$-Tree Backend**: An implementation of a generalised octree structure.
+
+## License
+
+This work is distributed under the MIT License. Dependencies either direct or indirect may have different licenses, so all of them have been reproduced in the THIRD-PARTY-LICENSES.md file at the root of this repository.
