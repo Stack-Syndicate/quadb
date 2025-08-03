@@ -24,6 +24,14 @@ The goal of QuadDB is to provide a robust and efficient solution for managing an
 
 **$2^n$-Tree Backend**: An implementation of a generalised octree structure.
 
+**Basic *CRUD* operations**: Creating, reading, updating and deleting entities in the database file.
+
+**Leaf Streaming**: Dynamically retrieving leaf nodes from the database as requests are made through the CRUD interface.
+
+**Documentation**: Robust documentation once the API is frozen.
+
+**$kd$-Tree Backend**: An implementation of tree structures that do not form new leaf nodes by equally bipartitioning the space. Allows for custom bipartitioning schemes.
+
 ## License
 
 This work is distributed under the MIT License. Dependencies either direct or indirect may have different licenses, so all of them have been reproduced in the THIRD-PARTY-LICENSES.md file at the root of this repository.
