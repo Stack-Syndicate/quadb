@@ -6,7 +6,6 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-7F0000?style=for-the-badge&labelColor=000000&logoColor=white)](LICENSE)
 [![Support on Ko-fi](https://img.shields.io/badge/ko--fi-Donate-999999?style=for-the-badge&logo=ko-fi&labelColor=333333)](https://ko-fi.com/stacksyndicate)
 
-
 This project is in the very early stages of development and is nowhere near ready for use.
 
 ## Description
@@ -17,13 +16,13 @@ QuadDB is an asynchronous octree manager implemented over [`redb`](https://docs.
 
 The goal of QuadDB is to provide a robust and efficient solution for managing and updating large spatial datasets, particularly in simulations. The use-case envisioned is for graduate students working on simulations that need to manipulate huge datasets involving particle systems or fluid dynamics where memory size is a constraint and access to a supercomputer is not feasible.
 
-| Feature                       | Status         |
-|-------------------------------|----------------|
+| Feature                       | Status                     |
+|-------------------------------|----------------------------|
 | $2^n$-Tree Backend            | :construction: In progress |
 | Basic CRUD Operations         | :construction: In progress |
-| Leaf Streaming                | :turtle: Planned     |
-| Documentation                 | :turtle: Planned     |
-| $kd$-Tree Backend             | :turtle: Planned     |
+| Leaf Streaming                | :turtle: Planned           |
+| Documentation                 | :turtle: Planned           |
+| $kd$-Tree Backend             | :turtle: Planned           |
 
 **$2^n$-Tree Backend**: An implementation of a generalised octree structure.
 
