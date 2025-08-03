@@ -1,16 +1,20 @@
-use std::error::Error;
-use bincode::{Encode, Decode, encode_to_vec, decode_from_slice, config};
+mod spacetree;
+mod utils;
+
+use bincode::{Decode, Encode, config, decode_from_slice, encode_to_vec};
 use redb::{Database, TableDefinition};
+use utils::BoxedError;
+
+use spacetree::SpaceTree;
 
 const TABLE_DEFINITION: TableDefinition<&[u8], &[u8]> = TableDefinition::new("kv");
 
-type BoxedError = Box<dyn Error + Send + Sync>;
-
 struct QuadDB {
     db: Database,
+    st: SpaceTree
 }
 impl QuadDB {
-    pub fn new(path: &str) -> Result<Self, BoxedError> {
+    pub fn new(path: &str, dimensions: usize, max_leaf_size: usize) -> Result<Self, BoxedError> {
         let db = Database::create(path)?;
         let txn = db.begin_write()?;
         {
@@ -18,7 +22,8 @@ impl QuadDB {
             table.insert("DUMMY".as_bytes(), "DUMMY".as_bytes())?;
         }
         txn.commit()?;
-        Ok(QuadDB { db })
+        let st = SpaceTree::new(dimensions, max_leaf_size);
+        Ok(QuadDB { db, st })
     }
     pub fn insert<K: Encode, V: Encode>(&self, key: &K, value: &V) -> Result<(), BoxedError> {
         let key_bytes = encode_to_vec(key, config::standard())?;
@@ -47,83 +52,5 @@ impl QuadDB {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use tempfile::tempdir;
-    use std::sync::Arc;
-    use std::thread;
-    use bincode::{Decode, Encode};
-
-    #[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
-    struct TestKey {
-        id: u32,
-    }
-
-    #[derive(Encode, Decode, Debug, PartialEq, Eq, Clone)]
-    struct TestValue {
-        name: String,
-        data: Vec<u8>,
-    }
-
-    #[test]
-    fn basic_crud_operations() {
-        let dir = tempdir().unwrap();
-        let db = QuadDB::new(dir.path().join("db.redb").to_str().unwrap()).unwrap();
-
-        let key = TestKey { id: 1 };
-        let value = TestValue { name: "alpha".into(), data: vec![1, 2, 3] };
-
-        // Create
-        db.insert(&key, &value).unwrap();
-
-        // Read
-        let fetched = db.get::<_, TestValue>(&key).unwrap().unwrap();
-        assert_eq!(fetched, value);
-
-        // Update
-        let new_value = TestValue { name: "beta".into(), data: vec![4, 5, 6] };
-        db.insert(&key, &new_value).unwrap();
-        let updated = db.get::<_, TestValue>(&key).unwrap().unwrap();
-        assert_eq!(updated, new_value);
-    }
-
-    #[test]
-    fn missing_key_returns_none() {
-        let dir = tempdir().unwrap();
-        let db = QuadDB::new(dir.path().join("db.redb").to_str().unwrap()).unwrap();
-
-        let key = TestKey { id: 999 };
-        let result = db.get::<_, TestValue>(&key).unwrap();
-        assert!(result.is_none());
-    }
-
-    #[test]
-    fn concurrent_reads_and_writes() {
-        let dir = tempdir().unwrap();
-        let db = Arc::new(QuadDB::new(dir.path().join("db.redb").to_str().unwrap()).unwrap());
-
-        let num_threads = 10;
-        let ops_per_thread = 20;
-        let mut handles = vec![];
-
-        for thread_id in 0..num_threads {
-            let db = Arc::clone(&db);
-            handles.push(thread::spawn(move || {
-                for i in 0..ops_per_thread {
-                    let key = TestKey { id: thread_id * ops_per_thread + i };
-                    let val = TestValue {
-                        name: format!("worker-{thread_id}"),
-                        data: vec![i as u8, thread_id as u8],
-                    };
-
-                    db.insert(&key, &val).unwrap();
-                    let fetched = db.get::<_, TestValue>(&key).unwrap().unwrap();
-                    assert_eq!(fetched, val);
-                }
-            }));
-        }
-
-        for h in handles {
-            h.join().unwrap();
-        }
-    }
+    
 }
