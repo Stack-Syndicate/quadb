@@ -12,6 +12,8 @@ description = "An asynchronous octree manager implemented over redb, designed fo
 
 [dependencies]
 bincode = { version = "2.0.1", features = ["derive", "serde"] }
+nalgebra = "0.34.0"
+petgraph = "0.8.2"
 redb = "2.6.2"
 
 [dev-dependencies]
