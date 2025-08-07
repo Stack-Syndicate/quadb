@@ -14,6 +14,21 @@ impl Bounds {
             max: vec![f64::MAX; dimensions],
         }
     }
+    pub fn is_inside(&self, position: impl AsRef<[f64]>) -> bool {
+        let position: &[f64] = position.as_ref();
+        if position.len() != self.min.len() {
+            panic!("Position and bounds dimensions do not match.");
+        } else {
+            let mut inside = true;
+            for ((min, max), coord) in zip(zip(&self.min, &self.max), position) {
+                if !(coord <= max && coord >= min) {
+                    inside = false;
+                    break;
+                }
+            }
+            return inside;
+        }
+    }
     pub fn bisect(&self) -> Vec<Self> {
         let midpoints: Vec<f64> = zip(&self.min, &self.max)
             .map(|(min, max)| (min + max) / 2.0)
@@ -113,13 +128,27 @@ impl<T: Clone + Encode + Decode<T>> SpaceTree<T> {
         }
         panic!("Position {:?} does not fit in any child bounds", position);
     }
+    pub fn get_neighbours(&self, position: impl AsRef<[f64]>) -> Result<&Vec<(Vec<f64>, T)>, &str> {
+        let position: &[f64] = position.as_ref();
+        if self.children.len() == 0 {
+            return Ok(&self.leaves);
+        } else {
+            for child in &self.children {
+                if child.bounds.is_inside(position) {
+                    return child.get_neighbours(position);
+                }
+            }
+        }
+        return Err("No neighbours found!");
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use bincode::{Decode, Encode};
-
     use crate::spacetree::SpaceTree;
+    use std::fs::File;
+    use std::io::{self, BufWriter, Write};
     fn count_entities<T: Encode + Decode<T> + Clone>(tree: &SpaceTree<T>) -> usize {
         if tree.children.is_empty() {
             tree.leaves.len()
@@ -130,15 +159,27 @@ mod tests {
     #[test]
     fn basic_insertion_and_subdivision() {
         let mut tree = SpaceTree::<f32>::new(2);
-
         for i in 0..10 {
             tree.insert(vec![i as f64, i as f64], i as f32);
         }
-
-        // Now check structure
         assert!(!tree.children.is_empty(), "Tree should have subdivided");
-
         let total_entities = count_entities(&tree);
         assert_eq!(total_entities, 10, "All entities should be in the tree");
+    }
+    #[test]
+    fn output_quadtree_structure() -> io::Result<()> {
+        let mut tree = SpaceTree::<f32>::new(2);
+        for i in -3..3 {
+            tree.insert(vec![i as f64, i as f64], i as f32);
+        }
+        assert!(!tree.children.is_empty(), "Tree should have subdivided");
+        let total_entities = count_entities(&tree);
+        assert_eq!(total_entities, 6, "All entities should be in the tree");
+        println!("{:?}", tree);
+        let file = File::create("debug_output.txt")?;
+        let mut writer = BufWriter::new(file);
+        writeln!(writer, "{:#?}", tree)?;
+        writer.flush()?;
+        Ok(())
     }
 }

@@ -1,10 +1,10 @@
 [package]
 name = "quadb"
 authors = ["Glenn Wallace glennw-coding@proton.me"]
-version = "0.2.0"
+version = "0.1.1"
 edition = "2024"
 license = "MIT"
-repository = "https://github.com/glennw-mt/quadb"
+repository = "https://github.com/Stack-Syndicate/quadb"
 readme = "README.md"
 keywords = ["database", "key-value", "octree", "async", "data-structure"]
 categories = ["data-structures", "database-implementations", "game-development", "simulation"]
@@ -12,10 +12,9 @@ description = "An asynchronous octree manager implemented over redb, designed fo
 
 [dependencies]
 bincode = { version = "2.0.1", features = ["derive", "serde"] }
-dashmap = "6.1.0"
-redb = "2.6.1"
-tokio = { version = "1.47.0", features = ["full"] }
+redb = "2.6.2"
 
 [dev-dependencies]
 rand = "0.9.2"
 tempfile = "3.20.0"
+tinydraw = "0.1.1"
