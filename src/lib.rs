@@ -9,12 +9,12 @@ use spacetree::SpaceTree;
 
 const TABLE_DEFINITION: TableDefinition<&[u8], &[u8]> = TableDefinition::new("kv");
 
-struct QuadDB {
+struct QuadDB<T: Encode + Decode<T> + Clone> {
     db: Database,
-    st: SpaceTree
+    st: SpaceTree<T>
 }
-impl QuadDB {
-    pub fn new(path: &str, dimensions: usize, max_leaf_size: usize) -> Result<Self, BoxedError> {
+impl<T: Encode + Decode<T> + Clone> QuadDB<T> {
+    pub fn new(path: &str, dimensions: usize) -> Result<Self, BoxedError> {
         let db = Database::create(path)?;
         let txn = db.begin_write()?;
         {
@@ -22,7 +22,7 @@ impl QuadDB {
             table.insert("DUMMY".as_bytes(), "DUMMY".as_bytes())?;
         }
         txn.commit()?;
-        let st = SpaceTree::new(dimensions, max_leaf_size);
+        let st = SpaceTree::new(dimensions);
         Ok(QuadDB { db, st })
     }
     pub fn insert<K: Encode, V: Encode>(&self, key: &K, value: &V) -> Result<(), BoxedError> {
@@ -48,9 +48,4 @@ impl QuadDB {
             Ok(None)
         }
     }
-}
-
-#[cfg(test)]
-mod tests {
-    
 }
