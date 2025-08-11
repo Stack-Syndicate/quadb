@@ -1,20 +1,23 @@
-mod spacetree;
+pub mod spacetree;
 mod utils;
+pub mod prelude;
 
 use bincode::{Decode, Encode, config, decode_from_slice, encode_to_vec};
-use redb::{Database, TableDefinition};
+use redb::{ReadableDatabase, TableDefinition, Database};
 use utils::BoxedError;
 
-use spacetree::SpaceTree;
+use crate::spacetree::SpaceTree;
+
+use crate::spacetree::Entity;
 
 const TABLE_DEFINITION: TableDefinition<&[u8], &[u8]> = TableDefinition::new("kv");
 
-struct QuadDB<T: Encode + Decode<T> + Clone> {
+pub struct QuadDB<const D: usize, E: Entity> {
     db: Database,
-    st: SpaceTree<T>
+    st: SpaceTree<D, E>
 }
-impl<T: Encode + Decode<T> + Clone> QuadDB<T> {
-    pub fn new(path: &str, dimensions: usize) -> Result<Self, BoxedError> {
+impl<const D: usize, E: Entity> QuadDB<D, E> {
+    pub fn new(path: &str) -> Result<Self, BoxedError> {
         let db = Database::create(path)?;
         let txn = db.begin_write()?;
         {
@@ -22,7 +25,7 @@ impl<T: Encode + Decode<T> + Clone> QuadDB<T> {
             table.insert("DUMMY".as_bytes(), "DUMMY".as_bytes())?;
         }
         txn.commit()?;
-        let st = SpaceTree::new(dimensions);
+        let st = SpaceTree::<D, E>::new();
         Ok(QuadDB { db, st })
     }
     pub fn insert<K: Encode, V: Encode>(&self, key: &K, value: &V) -> Result<(), BoxedError> {
@@ -49,3 +52,4 @@ impl<T: Encode + Decode<T> + Clone> QuadDB<T> {
         }
     }
 }
+
