@@ -6,17 +6,16 @@ use bincode::{Decode, Encode, config, decode_from_slice, encode_to_vec};
 use redb::{ReadableDatabase, TableDefinition, Database};
 use utils::BoxedError;
 
-use crate::spacetree::SpaceTree;
-
-use crate::spacetree::Entity;
+use crate::prelude::{QEntity, SpaceTree};
 
 const TABLE_DEFINITION: TableDefinition<&[u8], &[u8]> = TableDefinition::new("kv");
 
-pub struct QuadDB<const D: usize, E: Entity> {
+#[derive(Debug)]
+pub struct QuadDB<const D: usize, QE: QEntity> {
     db: Database,
-    st: SpaceTree<D, E>
+    st: SpaceTree<D, QE>
 }
-impl<const D: usize, E: Entity> QuadDB<D, E> {
+impl<const D: usize, QE: QEntity> QuadDB<D, QE> {
     pub fn new(path: &str) -> Result<Self, BoxedError> {
         let db = Database::create(path)?;
         let txn = db.begin_write()?;
@@ -25,7 +24,7 @@ impl<const D: usize, E: Entity> QuadDB<D, E> {
             table.insert("DUMMY".as_bytes(), "DUMMY".as_bytes())?;
         }
         txn.commit()?;
-        let st = SpaceTree::<D, E>::new();
+        let st = SpaceTree::<D, QE>::new();
         Ok(QuadDB { db, st })
     }
     pub fn insert<K: Encode, V: Encode>(&self, key: &K, value: &V) -> Result<(), BoxedError> {
