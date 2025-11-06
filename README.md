@@ -18,11 +18,9 @@ The goal of QuadDB is to provide a robust and efficient solution for managing an
 
 | Feature                       | Status                     |
 |-------------------------------|----------------------------|
-| $2^n$-Tree Backend            | :construction: In progress |
-| Basic CRUD Operations         | :construction: In progress |
-| Leaf Streaming                | :turtle: Planned           |
+| Basic CRUD Operations         | :construction: Testing |
+| Leaf Streaming                | :construction: Testing |
 | Documentation                 | :turtle: Planned           |
-| $kd$-Tree Backend             | :turtle: Planned           |
 
 **$2^n$-Tree Backend**: An implementation of a generalised octree structure.
 
